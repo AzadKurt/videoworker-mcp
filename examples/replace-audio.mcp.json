@@ -1,0 +1,32 @@
+{
+  "inputs": ["YOUR_INPUT_0_FILE_ID", "YOUR_INPUT_1_FILE_ID"],
+  "args": [
+    "-i",
+    "{{input:0}}",
+    "-i",
+    "{{input:1}}",
+    "-map",
+    "0:v:0",
+    "-map",
+    "1:a:0",
+    "-c:v",
+    "libx264",
+    "-preset",
+    "fast",
+    "-crf",
+    "25",
+    "-pix_fmt",
+    "yuv420p",
+    "-c:a",
+    "aac",
+    "-af",
+    "apad",
+    "-shortest",
+    "-movflags",
+    "+faststart",
+    "{{output:0}}"
+  ],
+  "outputs": ["new-soundtrack.mp4"],
+  "timeout_seconds": 10,
+  "request_id": "GENERATE_A_UUID_ONCE_AND_KEEP_FOR_RETRIES"
+}

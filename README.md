@@ -141,6 +141,14 @@ Flow: `get_usage` → `upload_file` → `create_job` → `get_job` → `download
 See [example job arguments](examples/trim-and-compress.json): replace the input
 file ID and generate a new UUID for each intended job.
 
+### More than one input
+
+[Workflow recipes](docs/workflows.md) cover joining clips, adding an image/logo,
+and replacing a soundtrack. Each includes input order, behavior notes and a
+ready-to-edit MCP JSON file. The same recipes are
+[displayed on the website](https://videoworker.dev/docs#workflows) with copy buttons
+for REST and MCP.
+
 ## Tools
 
 | Tool                 | Purpose                                   | API-key scope               |

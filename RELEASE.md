@@ -24,7 +24,8 @@ until a real publication is verified.
 
 `glama.json` identifies the maintainer; it alone does not create a directory
 listing. On 3 November the repository was submitted and Glama confirmed review
-submission; acceptance is pending. The hosted endpoint is published separately
+submission; the listing was then approved and verified publicly at
+<https://glama.ai/mcp/servers/AzadKurt/videoworker-mcp>. The hosted endpoint is published separately
 in the official MCP Registry as `io.github.AzadKurt/videoworker` version 0.1.0.
 
 ## Verified publication

@@ -9,7 +9,8 @@ run them. No local FFmpeg installation required.
 [Get started free](https://videoworker.dev/pricing) ·
 [Hosted MCP](https://videoworker.dev/mcp) ·
 [REST API](https://videoworker.dev/docs) ·
-[Releases](https://github.com/AzadKurt/videoworker-mcp/releases)
+[Releases](https://github.com/AzadKurt/videoworker-mcp/releases) ·
+[Listed on Glama](https://glama.ai/mcp/servers/AzadKurt/videoworker-mcp)
 
 ## Choose your connection
 

@@ -3,8 +3,10 @@
 Status, 3 November 2026: GitHub release 0.1.0 is public and installable. The
 hosted service is published in the official MCP Registry. The owner signed in
 to Glama and the source repository was submitted; Glama confirmed "Your server
-has been submitted for review". Review/acceptance is still pending. PyPI needs
-owner account/Trusted Publisher setup and is not published.
+has been submitted for review". The owner subsequently received approval and
+the [public listing](https://glama.ai/mcp/servers/AzadKurt/videoworker-mcp) was
+independently verified with its README, installation/configs and GitHub link.
+PyPI needs owner account/Trusted Publisher setup and is not published.
 
 ## Initial release: GitHub
 

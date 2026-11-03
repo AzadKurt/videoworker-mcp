@@ -1,0 +1,40 @@
+name: Publish hosted MCP listing
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      MCP_PUBLISHER_VERSION: v1.8.1
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - name: Verify OAuth discovery and protected endpoint
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error https://videoworker.dev/.well-known/oauth-protected-resource/mcp/server | jq -e '.resource == "https://videoworker.dev/mcp/server"'
+          status=$(curl --silent --output /dev/null --write-out '%{http_code}' -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"listing-check","version":"1"}}}' https://videoworker.dev/mcp/server)
+          test "$status" = 401
+      - name: Install signature verifier
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+      - name: Download and verify registry publisher
+        run: |
+          set -euo pipefail
+          archive=mcp-publisher_linux_amd64.tar.gz
+          base_url="https://github.com/modelcontextprotocol/registry/releases/download/${MCP_PUBLISHER_VERSION}"
+          curl --fail --location --silent --show-error -o "$archive" "$base_url/$archive"
+          curl --fail --location --silent --show-error -o "$archive.sigstore.json" "$base_url/$archive.sigstore.json"
+          cosign verify-blob --bundle "$archive.sigstore.json" --certificate-identity "https://github.com/modelcontextprotocol/registry/.github/workflows/release.yml@refs/tags/${MCP_PUBLISHER_VERSION}" --certificate-oidc-issuer https://token.actions.githubusercontent.com "$archive"
+          tar xzf "$archive" mcp-publisher
+      - name: Authenticate with short-lived GitHub Actions identity
+        run: ./mcp-publisher login github-oidc
+      - name: Publish hosted service metadata
+        run: ./mcp-publisher publish

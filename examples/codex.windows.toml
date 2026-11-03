@@ -1,0 +1,11 @@
+# Merge into ~/.codex/config.toml; replace every example path.
+[mcp_servers.videoworker]
+command = "C:/path/to/python.exe"
+args = ["-m", "videoworker_mcp"]
+startup_timeout_sec = 30
+tool_timeout_sec = 960
+
+[mcp_servers.videoworker.env]
+VIDEO_WORKER_API_KEY_FILE = "C:/Users/YOU/videoworker/videoworker.key"
+VIDEO_WORKER_UPLOAD_ROOT = "C:/Users/YOU/videoworker/uploads"
+VIDEO_WORKER_DOWNLOAD_ROOT = "C:/Users/YOU/videoworker/downloads"

@@ -87,7 +87,7 @@ class Settings:
                 raise ValueError("API key file must be private (mode 600).")
             key = path.read_text().strip()
         return cls(
-            os.environ.get("VIDEO_WORKER_API_URL", ""),
+            os.environ.get("VIDEO_WORKER_API_URL", "https://videoworker.dev"),
             key,
             Path(os.environ.get("VIDEO_WORKER_UPLOAD_ROOT", "")),
             Path(os.environ.get("VIDEO_WORKER_DOWNLOAD_ROOT", "")),

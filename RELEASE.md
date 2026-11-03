@@ -1,29 +1,37 @@
-# Release candidate — 2 November 2026
+# Release 0.1.0
 
-Source copied from the private service repository's `39eaccc` connector package
-and `tests/test_mcp_connector.py`. No service backend, credentials, private config,
-databases, media or runtime logs are included. This checkout has its own `main`
-branch and does not have a Git remote.
+The standalone connector lives at <https://github.com/AzadKurt/videoworker-mcp>.
+The owner selected MIT on 3 November 2026. This release contains no private
+backend, credentials, databases, runtime logs or media.
 
-Suggested public repository name: `videoworker-mcp`. Suggested license: MIT for
-our own connector code. A license has not yet been issued in this candidate;
-choose the copyright holder and complete dependency-license review before public
-release. Until then this is a review candidate, not an advertised open-source
-release. Dependencies are installed separately, not vendored here.
+## Release checklist
 
-Before publishing:
+1. Run pytest, Ruff lint/format and parse all example JSON/TOML files.
+2. Build the sdist and wheel, inspect contents and run `twine check`.
+3. Install in a clean environment outside the source checkout; initialize actual
+   stdio and discover all eight tools. Never use a customer key in CI.
+4. Push the reviewed commit and tag `v0.1.0`. GitHub Actions tests Windows/Linux,
+   builds and checks the package, then publishes artifacts and SHA256SUMS.
+5. Verify public wheel installation from README. Never replace a released tag or
+   artifact with different bytes; issue a new version.
 
-1. Review the exact tracked file list and the license decision.
-2. Review dependency licenses for the pinned MCP SDK and HTTPX plus transitive
-   dependencies; preserve required notices if any third-party code is distributed.
-3. Test installation in a clean environment and real client discovery plus a tiny
-   authorized production job. Resolve the connector's current 50-MiB download cap
-   or clearly retain/document it. Do not claim all MCP clients were tested.
-4. Establish one source of truth: until the split is released, connector fixes
-   originate in the service repo and must be carried here deliberately. After
-   release, import a versioned package into the service instead of editing two copies.
-5. Publish the reviewed repository; package-registry release is a separate step.
+## Channels and limits
 
-The aim is transparent, installable agent tooling and useful examples. Public code
-does not imply free hosted processing, expose hosted OAuth/auth internals, or
-prove demand. Do not publish merely to imitate other companies.
+GitHub releases are the initial distribution channel. PyPI is not published yet.
+It needs the owner's PyPI account and a project-bound Trusted Publisher; see
+[distribution notes](docs/distribution.md). Do not advertise a bare PyPI install
+until a real publication is verified.
+
+`glama.json` identifies the maintainer; it alone does not create a directory
+listing. Submission/acceptance must be verified separately.
+
+Tests cover controlled HTTP/file operations, real MCP SDK discovery and actual
+stdio from an installed package. They do not claim every client/version, large
+production transfers or every OAuth client was manually accepted. Hosted OAuth
+has separately been tested with Codex and cannot access local paths.
+
+The initial connector was split from the private service repository. From this
+release, this repo is the source of truth for the distributed connector. The
+service's older local copy remains for compatibility; shared fixes must be
+ported deliberately until the service imports a versioned package. The hosted
+remote MCP component is separate.

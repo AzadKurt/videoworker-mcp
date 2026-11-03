@@ -1,0 +1,22 @@
+{
+  "inputs": ["REPLACE_WITH_UPLOADED_FILE_ID"],
+  "args": [
+    "-i",
+    "{{input:0}}",
+    "-t",
+    "1",
+    "-vf",
+    "scale=160:-2",
+    "-c:v",
+    "libx264",
+    "-preset",
+    "veryfast",
+    "-crf",
+    "28",
+    "-an",
+    "{{output:0}}"
+  ],
+  "outputs": ["clip-small.mp4"],
+  "timeout_seconds": 10,
+  "request_id": "REPLACE_WITH_A_NEW_UUID_AND_KEEP_FOR_RETRIES"
+}

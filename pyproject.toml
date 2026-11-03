@@ -1,17 +1,36 @@
 [build-system]
-requires = ["setuptools>=75"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "videoworker-mcp"
 version = "0.1.0"
 description = "MCP stdio tools for the videoworker media-processing API"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "videoworker", email = "info@videoworker.dev" }]
+keywords = ["mcp", "ffmpeg", "video", "audio", "ai-agents"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia :: Video",
+]
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = ["httpx>=0.28,<1", "mcp==2.3.0"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8,<10", "ruff>=0.11,<1"]
+
+[project.urls]
+Homepage = "https://videoworker.dev"
+Documentation = "https://videoworker.dev/mcp"
+Repository = "https://github.com/AzadKurt/videoworker-mcp"
+Issues = "https://github.com/AzadKurt/videoworker-mcp/issues"
 
 [project.scripts]
 videoworker-mcp = "videoworker_mcp.__main__:main"

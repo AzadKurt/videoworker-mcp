@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "videoworker": {
+      "command": "C:/path/to/python.exe",
+      "args": ["-m", "videoworker_mcp"],
+      "env": {
+        "VIDEO_WORKER_API_KEY_FILE": "C:/Users/YOU/videoworker/videoworker.key",
+        "VIDEO_WORKER_UPLOAD_ROOT": "C:/Users/YOU/videoworker/uploads",
+        "VIDEO_WORKER_DOWNLOAD_ROOT": "C:/Users/YOU/videoworker/downloads"
+      }
+    }
+  }
+}

@@ -1,57 +1,199 @@
 # videoworker MCP
 
-Standalone stdio connector for the [videoworker](https://videoworker.dev) FFmpeg
-processing API. Agents can inspect allowance, upload explicitly authorized media,
-create jobs, check progress, download results and request cancellation/deletion.
+**Give your AI agent FFmpeg: upload local media, run a remote job, and save the result.**
 
-Local release candidate: not yet published to GitHub or PyPI. License selection
-and dependency-license review remain release checks; see [release status](RELEASE.md).
+An MIT-licensed, local stdio MCP connector for the [videoworker](https://videoworker.dev)
+video, audio and image processing API. Bring standard FFmpeg arguments; our workers
+run them. No local FFmpeg installation required.
 
-## Install and run
+[Get started free](https://videoworker.dev/pricing) ·
+[Hosted MCP](https://videoworker.dev/mcp) ·
+[REST API](https://videoworker.dev/docs) ·
+[Releases](https://github.com/AzadKurt/videoworker-mcp/releases)
 
-Requires Python 3.12+. From this checkout:
+## Choose your connection
+
+|                   | Local connector — this repo          | Hosted MCP                                        |
+| ----------------- | ------------------------------------ | ------------------------------------------------- |
+| Best for          | Local file uploads and downloads     | Connecting without installing Python              |
+| Transport         | stdio                                | Streamable HTTP                                   |
+| Sign in           | Scoped API key in a private file     | Browser login and OAuth consent                   |
+| Local file access | Named media in your selected folders | None; upload via web or REST first                |
+| Setup             | Quick start below                    | [Hosted setup guide](https://videoworker.dev/mcp) |
+
+Both use the same account and allowance. The connector is free software; hosted
+processing follows the [current plans and limits](https://videoworker.dev/pricing).
+Free accounts receive a small monthly allowance. Check pricing for the Starter
+launch offer and its availability; a trial is not required to use Free.
+
+## Quick start
+
+### 1. Install — no checkout or Git needed
+
+Requires **Python 3.12 or newer**. Install the versioned release wheel:
 
 ```sh
-python -m pip install .
-python -m videoworker_mcp
+python -m pip install "https://github.com/AzadKurt/videoworker-mcp/releases/download/v0.1.0/videoworker_mcp-0.1.0-py3-none-any.whl"
+python -m videoworker_mcp --version
 ```
 
-The installed `videoworker-mcp` command is an equivalent entry point. Use either
-entry point as the command of an MCP-capable client, including Codex. Client
-configuration syntax varies; no API key should appear in a shared configuration.
+On Windows, use `py -3.12` instead of `python` if needed. On macOS/Linux, your
+command may be `python3`. Use that same Python installation in your MCP config.
+Print its full path with:
 
-Configure these environment variables privately in the client process:
+```sh
+python -c "import sys; print(sys.executable)"
+```
 
-| Variable                     | Value                                                    |
-| ---------------------------- | -------------------------------------------------------- |
-| `VIDEO_WORKER_API_URL`       | `https://videoworker.dev`                                |
-| `VIDEO_WORKER_API_KEY_FILE`  | Absolute path to your private API-key file               |
-| `VIDEO_WORKER_UPLOAD_ROOT`   | Existing absolute folder of media authorized for uploads |
-| `VIDEO_WORKER_DOWNLOAD_ROOT` | Existing absolute destination folder                     |
+Alternative with Git installed:
 
-The key needs the scopes for the tools you use: `usage:read`, `files:write`,
-`jobs:read`, `jobs:write`, `outputs:read`. The dashboard issues scoped keys.
-Keep the key file private (mode 600 on POSIX, your user only on Windows).
-`VIDEO_WORKER_API_KEY` is also supported, but a private file avoids putting the
-key into copied client configuration. Never pass it as a command-line argument.
+```sh
+python -m pip install "git+https://github.com/AzadKurt/videoworker-mcp.git@v0.1.0"
+```
 
-## What runs where?
+This package is not on PyPI yet. `pip install videoworker-mcp` is not the command
+for this release.
 
-The connector runs locally; FFmpeg runs on the configured service. This does not
-bundle or provide a free self-hosted processing backend. API allowance, ownership,
-retention and cost limits apply equally to MCP jobs. Hosted remote MCP/OAuth is a
-separate connection method and is not part of this package.
+### 2. Create your workspace and private key file
 
-Filenames are flat, validated media names. Arbitrary paths, remote URLs and
-symlink/junction folders are rejected. Uploads require the user's authorization.
-The current connector independently caps downloads at 50 MiB even when a service
-plan permits larger outputs; review this before distributing to large-file users.
+Sign in to [your workspace](https://videoworker.dev/dashboard). Under API keys,
+create a key with `usage:read`, `files:write`, `jobs:read`, `jobs:write` and
+`outputs:read` for all eight tools. Save it as plain text in a file accessible
+only to your user. On macOS/Linux: `chmod 600 /absolute/path/to/key`. On Windows,
+keep it in your user profile and restrict its file permissions to you.
 
-Use one UUID `request_id` per job and retain it with identical arguments for
-retries. A lost response may still have created a job. Check allowance first,
-poll no faster than once per second, and download before result expiry.
-Cancellation is complete only when the server confirms it. Deletion requires
-the user's explicit request and server-confirmed removal.
+Create **uploads** and **downloads** folders. Both must exist and use absolute
+paths. Keep only authorized media in uploads; keep the key file elsewhere.
+Never paste the key into a chat or a shared client config.
+
+### 3. Add your client config
+
+Replace the Python and file/folder paths with your own. **Merge the entry into an
+existing config**, preserving other servers. The values are paths, not secrets.
+Restart or reload your client after saving.
+
+#### Codex
+
+Add to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.videoworker]
+command = "/absolute/path/to/python"
+args = ["-m", "videoworker_mcp"]
+startup_timeout_sec = 30
+tool_timeout_sec = 960
+
+[mcp_servers.videoworker.env]
+VIDEO_WORKER_API_KEY_FILE = "/absolute/path/to/videoworker.key"
+VIDEO_WORKER_UPLOAD_ROOT = "/absolute/path/to/uploads"
+VIDEO_WORKER_DOWNLOAD_ROOT = "/absolute/path/to/downloads"
+```
+
+Windows forward-slash paths work, e.g. `C:/Users/YOU/media/uploads`. Ready-to-edit:
+[Windows](examples/codex.windows.toml) / [macOS and Linux](examples/codex.posix.toml).
+Keep the hosted connection named `videoworker_remote` if you also use it.
+
+#### Claude Desktop
+
+Open **Settings → Developer → Edit Config** and merge:
+
+```json
+{
+  "mcpServers": {
+    "videoworker": {
+      "command": "/absolute/path/to/python",
+      "args": ["-m", "videoworker_mcp"],
+      "env": {
+        "VIDEO_WORKER_API_KEY_FILE": "/absolute/path/to/videoworker.key",
+        "VIDEO_WORKER_UPLOAD_ROOT": "/absolute/path/to/uploads",
+        "VIDEO_WORKER_DOWNLOAD_ROOT": "/absolute/path/to/downloads"
+      }
+    }
+  }
+}
+```
+
+Ready-to-edit: [Windows](examples/claude-desktop.windows.json) /
+[macOS and Linux](examples/claude-desktop.posix.json).
+
+#### Cursor
+
+Use the same JSON structure in `~/.cursor/mcp.json` (global), or
+`.cursor/mcp.json` (project). Enable the server in Cursor's MCP settings.
+Ready-to-edit: [Windows](examples/cursor.windows.json) /
+[macOS and Linux](examples/cursor.posix.json).
+
+Examples follow documented stdio config formats. Real MCP SDK discovery is
+tested; this does not claim every desktop app/version was manually tested.
+
+### 4. Try a small job
+
+Put a small `clip.mp4` in uploads and ask your agent:
+
+> Check my videoworker allowance first. I authorize uploading clip.mp4 from my
+> configured uploads folder. Trim it to its first second and compress it as MP4.
+> Create one job with a 10-second runtime limit. Keep its request_id for any retry,
+> wait at least one second between status checks, and save the successful result
+> as clip-small.mp4 in my downloads folder. Do not delete anything.
+
+Flow: `get_usage` → `upload_file` → `create_job` → `get_job` → `download_result`.
+See [example job arguments](examples/trim-and-compress.json): replace the input
+file ID and generate a new UUID for each intended job.
+
+## Tools
+
+| Tool                 | Purpose                                   | API-key scope               |
+| -------------------- | ----------------------------------------- | --------------------------- |
+| `get_usage`          | Allowance, reservations and storage       | `usage:read`                |
+| `list_jobs`          | Recent owned jobs                         | `jobs:read`                 |
+| `upload_file`        | Upload authorized local media             | `files:write`               |
+| `create_job`         | FFmpeg job with a stable retry UUID       | `jobs:write`                |
+| `get_job`            | Job state and output metadata             | `jobs:read`                 |
+| `download_result`    | Save output to a new local file           | `jobs:read`, `outputs:read` |
+| `cancel_job`         | Request cancellation; confirm termination | `jobs:write`                |
+| `delete_job_outputs` | Delete results when requested             | `jobs:write`                |
+
+## Configuration and troubleshooting
+
+| Environment variable         | Value                                           |
+| ---------------------------- | ----------------------------------------------- |
+| `VIDEO_WORKER_API_KEY_FILE`  | Absolute path to a private plaintext key file   |
+| `VIDEO_WORKER_UPLOAD_ROOT`   | Existing absolute folder of authorized media    |
+| `VIDEO_WORKER_DOWNLOAD_ROOT` | Existing absolute destination folder            |
+| `VIDEO_WORKER_API_URL`       | Optional; defaults to `https://videoworker.dev` |
+
+`VIDEO_WORKER_API_KEY` is supported in private process environments and takes
+precedence over the file. Never put it in a shared config or command line.
+Custom origins require HTTPS, except explicit loopback HTTP for development.
+
+- **ENOENT / server not found:** use the full Python path printed above, not a
+  shell alias. GUI applications can have a different PATH.
+- **Configuration error:** set the same variables in a terminal and run
+  `python -m videoworker_mcp --check`. It validates local setup only, without API
+  calls or credential/allowance verification. Help/version need no key.
+- **Unauthorized / forbidden:** check your key, scopes and account in the
+  dashboard. Never send credentials in a support message.
+- **File rejected:** pass a flat name, not a path or URL. Local extensions:
+  mp4, mp3, wav, webm, gif, png, jpg, jpeg, mkv, mov, ogg, flac. Linked folders
+  and symlinks/junctions are rejected.
+- **Slow transfer:** uploads/downloads can take up to 15 minutes per network
+  operation. Configure suitable tool-call timeouts where supported. Closing a
+  tool call does not cancel an accepted processing job.
+
+## Data and retries
+
+The service enforces account ownership, allowance, file limits and expiry.
+The local process runs as your OS user; folder restrictions are application
+guards, not an operating-system sandbox. No local FFmpeg is bundled or needed.
+
+Downloads never overwrite files or follow agent-supplied output URLs. Declared
+output sizes are bounded to 1 GiB; legacy metadata without a size has a 50-MiB
+fallback cap. Transfers stream instead of loading a full video into memory.
+
+Keep one UUID `request_id` and identical arguments for job retries (48 hours).
+An uncertain response can still mean success. Uploads are not idempotent. Poll
+no faster than once per second and download before expiry. Cancellation/deletion
+are complete only after server confirmation. No billing/admin permissions needed.
 
 ## Development
 
@@ -62,6 +204,16 @@ python -m ruff check .
 python -m ruff format --check .
 ```
 
-The connector tests use controlled HTTP transports and MCP discovery. They do not
-claim acceptance against every model/client, the production backend or real
-large-media transfers.
+Tests use tiny controlled HTTP fixtures and actual MCP SDK discovery. See
+[release checks](RELEASE.md), [dependency licenses](DEPENDENCIES.md) and
+[security reporting](SECURITY.md).
+
+## License and support
+
+[MIT](LICENSE) for the connector; hosted processing and the private backend are
+separate. [GitHub issues](https://github.com/AzadKurt/videoworker-mcp/issues) or
+[info@videoworker.dev](mailto:info@videoworker.dev).
+
+Config references: [Codex](https://learn.chatgpt.com/docs/extend/mcp?surface=cli),
+[Claude Desktop](https://modelcontextprotocol.io/docs/develop/connect-local-servers),
+[Cursor](https://cursor.com/docs/mcp).

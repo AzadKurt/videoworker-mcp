@@ -23,7 +23,20 @@ It needs the owner's PyPI account and a project-bound Trusted Publisher; see
 until a real publication is verified.
 
 `glama.json` identifies the maintainer; it alone does not create a directory
-listing. Submission/acceptance must be verified separately.
+listing. On 3 November the repository was submitted and Glama confirmed review
+submission; acceptance is pending. The hosted endpoint is published separately
+in the official MCP Registry as `io.github.AzadKurt/videoworker` version 0.1.0.
+
+## Verified publication
+
+The `v0.1.0` workflow passed on Linux and Windows and published the release wheel,
+source archive and SHA256SUMS. Clean installation from the public GitHub wheel
+URL, outside the source checkout, initialized real stdio and discovered all
+eight tools without API calls. Wheel SHA256:
+`5a0deb24a1c04305b23da22b702144f4018b071487bfdbddf9ab98add60d23fa`.
+
+Release workflow: <https://github.com/AzadKurt/videoworker-mcp/actions/runs/41554034517>.
+Registry publication: <https://github.com/AzadKurt/videoworker-mcp/actions/runs/41554034889>.
 
 Tests cover controlled HTTP/file operations, real MCP SDK discovery and actual
 stdio from an installed package. They do not claim every client/version, large

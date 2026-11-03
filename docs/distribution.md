@@ -1,5 +1,11 @@
 # Distribution and directory submissions
 
+Status, 3 November 2026: GitHub release 0.1.0 is public and installable. The
+hosted service is published in the official MCP Registry. The owner signed in
+to Glama and the source repository was submitted; Glama confirmed "Your server
+has been submitted for review". Review/acceptance is still pending. PyPI needs
+owner account/Trusted Publisher setup and is not published.
+
 ## Initial release: GitHub
 
 Canonical repository: <https://github.com/AzadKurt/videoworker-mcp>.
@@ -60,6 +66,9 @@ The hosted remote endpoint can be registered without publishing a PyPI package.
 The optional registry workflow uses GitHub Actions OIDC (no reusable credential),
 and is dispatched separately after the hosted endpoint/metadata are checked.
 The local connector's PyPI entry can follow once the package is actually released.
+
+Published hosted entry: `io.github.AzadKurt/videoworker`, version 0.1.0. Public
+readback: <https://registry.modelcontextprotocol.io/v0.1/servers/io.github.AzadKurt%2Fvideoworker/versions/latest>.
 
 Official guidance:
 <https://github.com/modelcontextprotocol/registry/blob/main/docs/modelcontextprotocol-io/remote-servers.mdx>

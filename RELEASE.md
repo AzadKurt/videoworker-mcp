@@ -41,6 +41,16 @@ submission; the listing was then approved and verified publicly at
 <https://glama.ai/mcp/servers/AzadKurt/videoworker-mcp>. The hosted endpoint is published separately
 in the official MCP Registry as `io.github.AzadKurt/videoworker` version 0.1.0.
 
+## Verified publication: 0.2.0
+
+Linux and Windows tests and the release job passed. A clean installation from
+the public wheel URL reports 0.2.0 and discovers all ten tools over actual stdio,
+without API calls. Its SHA256 matches the published SHA256SUMS:
+`eeacfd7e62347c33ac6d9e538a75d8f72db91fda0aed5d36629163b6488fc6fa`.
+
+Release: <https://github.com/AzadKurt/videoworker-mcp/releases/tag/v0.2.0>.
+Workflow: <https://github.com/AzadKurt/videoworker-mcp/actions/runs/42098496647>.
+
 ## Previous verified publication: 0.1.0
 
 The `v0.1.0` workflow passed on Linux and Windows and published the release wheel,

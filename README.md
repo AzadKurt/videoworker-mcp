@@ -34,7 +34,7 @@ launch offer and its availability; a trial is not required to use Free.
 Requires **Python 3.12 or newer**. Install the versioned release wheel:
 
 ```sh
-python -m pip install "https://github.com/AzadKurt/videoworker-mcp/releases/download/v0.1.0/videoworker_mcp-0.1.0-py3-none-any.whl"
+python -m pip install "https://github.com/AzadKurt/videoworker-mcp/releases/download/v0.2.0/videoworker_mcp-0.2.0-py3-none-any.whl"
 python -m videoworker_mcp --version
 ```
 
@@ -49,7 +49,7 @@ python -c "import sys; print(sys.executable)"
 Alternative with Git installed:
 
 ```sh
-python -m pip install "git+https://github.com/AzadKurt/videoworker-mcp.git@v0.1.0"
+python -m pip install "git+https://github.com/AzadKurt/videoworker-mcp.git@v0.2.0"
 ```
 
 This package is not on PyPI yet. `pip install videoworker-mcp` is not the command
@@ -164,8 +164,8 @@ once per second and download before expiry. Use the identical request and UUID
 for retries within 48 hours; never automatically resubmit a lost reply. Defaults
 and encoding behavior are pinned by version. Smaller output size is not guaranteed.
 
-These new tools are staged locally and require the corresponding service
-release. `presets_unsupported` means the server has no catalog;
+Version 0.2.0 adds these tools and requires a server with preset support.
+`presets_unsupported` means the server has no catalog;
 `presets_unsupported` also identifies a missing execution route;
 `preset_not_found` identifies an unknown ID/version and `input_unavailable`
 means the owned upload is missing or expired. Unknown 404 shapes remain

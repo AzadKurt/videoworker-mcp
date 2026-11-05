@@ -30,6 +30,8 @@ async def check():
             assert {tool.name for tool in tools.tools} == {
                 "get_usage",
                 "list_jobs",
+                "list_presets",
+                "run_preset",
                 "upload_file",
                 "create_job",
                 "get_job",
@@ -38,7 +40,7 @@ async def check():
                 "delete_job_outputs",
             }
     print(
-        "Installed stdio connector initialized; all eight tools discovered. No API calls."
+        "Installed stdio connector initialized; all ten tools discovered. No API calls."
     )
 
 

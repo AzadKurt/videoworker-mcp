@@ -1,16 +1,29 @@
-# Release 0.1.0
+# Release 0.2.0
 
 The standalone connector lives at <https://github.com/AzadKurt/videoworker-mcp>.
 The owner selected MIT on 3 November 2026. This release contains no private
 backend, credentials, databases, runtime logs or media.
+
+## What's new
+
+- Discover versioned presets with `list_presets` and submit a normal job with
+  `run_preset`: web MP4, MP3 audio, JPEG thumbnail and short GIF preview.
+- Pin the preset version, validated parameters, processing maximum and retry UUID.
+  Existing FFmpeg commands, uploads and downloads remain available.
+- Preserve uncertain submission outcomes instead of silently creating another job.
+  Strict numeric inputs and safe error codes make retries predictable.
+- Ten local tools; ready-to-edit example arguments for the new preset workflow.
+
+Preset processing requires a compatible server. The same account allowance,
+ownership, storage and expiry rules apply; no extra processing tier is needed.
 
 ## Release checklist
 
 1. Run pytest, Ruff lint/format and parse all example JSON/TOML files.
 2. Build the sdist and wheel, inspect contents and run `twine check`.
 3. Install in a clean environment outside the source checkout; initialize actual
-   stdio and discover all eight tools. Never use a customer key in CI.
-4. Push the reviewed commit and tag `v0.1.0`. GitHub Actions tests Windows/Linux,
+   stdio and discover all ten tools. Never use a customer key in CI.
+4. Push the reviewed commit and tag `v0.2.0`. GitHub Actions tests Windows/Linux,
    builds and checks the package, then publishes artifacts and SHA256SUMS.
 5. Verify public wheel installation from README. Never replace a released tag or
    artifact with different bytes; issue a new version.
@@ -28,7 +41,7 @@ submission; the listing was then approved and verified publicly at
 <https://glama.ai/mcp/servers/AzadKurt/videoworker-mcp>. The hosted endpoint is published separately
 in the official MCP Registry as `io.github.AzadKurt/videoworker` version 0.1.0.
 
-## Verified publication
+## Previous verified publication: 0.1.0
 
 The `v0.1.0` workflow passed on Linux and Windows and published the release wheel,
 source archive and SHA256SUMS. Clean installation from the public GitHub wheel

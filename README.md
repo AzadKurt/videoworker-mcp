@@ -59,7 +59,7 @@ for this release.
 
 Sign in to [your workspace](https://videoworker.dev/dashboard). Under API keys,
 create a key with `usage:read`, `files:write`, `jobs:read`, `jobs:write` and
-`outputs:read` for all eight tools. Save it as plain text in a file accessible
+`outputs:read` for all ten tools. Save it as plain text in a file accessible
 only to your user. On macOS/Linux: `chmod 600 /absolute/path/to/key`. On Windows,
 keep it in your user profile and restrict its file permissions to you.
 
@@ -149,12 +149,38 @@ ready-to-edit MCP JSON file. The same recipes are
 [displayed on the website](https://videoworker.dev/docs#workflows) with copy buttons
 for REST and MCP.
 
+### Versioned presets
+
+On a server that supports `GET /v1/presets`, use `list_presets` to discover
+validated parameters, pinned versions and output filenames. Then call
+`run_preset` with an uploaded file ID, explicit version, parameters, processing
+maximum and a chosen UUID. [Example MCP arguments](examples/web-mp4.preset.mcp.json)
+trim and resize video into H.264/AAC MP4. Other catalog entries extract MP3,
+produce a JPEG thumbnail or render a short GIF.
+
+The same ordinary job quota, ownership and storage rules apply. The timeout
+reserves a processing maximum, not the clip duration. Poll `get_job` at most
+once per second and download before expiry. Use the identical request and UUID
+for retries within 48 hours; never automatically resubmit a lost reply. Defaults
+and encoding behavior are pinned by version. Smaller output size is not guaranteed.
+
+These new tools are staged locally and require the corresponding service
+release. `presets_unsupported` means the server has no catalog;
+`presets_unsupported` also identifies a missing execution route;
+`preset_not_found` identifies an unknown ID/version and `input_unavailable`
+means the owned upload is missing or expired. Unknown 404 shapes remain
+`preset_unavailable`. No case silently falls back to another job. Listing
+presets first checks the same key against the owned jobs-read endpoint, since
+the REST metadata catalog itself is intentionally public.
+
 ## Tools
 
 | Tool                 | Purpose                                   | API-key scope               |
 | -------------------- | ----------------------------------------- | --------------------------- |
 | `get_usage`          | Allowance, reservations and storage       | `usage:read`                |
 | `list_jobs`          | Recent owned jobs                         | `jobs:read`                 |
+| `list_presets`       | Versioned tasks, parameters and defaults  | `jobs:read`                 |
+| `run_preset`         | One preset job with a stable retry UUID   | `jobs:write`                |
 | `upload_file`        | Upload authorized local media             | `files:write`               |
 | `create_job`         | FFmpeg job with a stable retry UUID       | `jobs:write`                |
 | `get_job`            | Job state and output metadata             | `jobs:read`                 |

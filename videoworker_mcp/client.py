@@ -294,9 +294,31 @@ class Connector:
             else None,
         )
 
-    def call(self, method, path, *, uncertain=False, **kwargs):
+    def call(self, method, path, *, uncertain=False, preset=False, **kwargs):
         try:
             with self.client.stream(method, self.origin + path, **kwargs) as response:
+                if preset and response.status_code == 404:
+                    data = bytearray()
+                    for chunk in response.iter_bytes():
+                        if len(data) + len(chunk) > 4096:
+                            break
+                        data.extend(chunk)
+                    try:
+                        detail = json.loads(data).get("detail")
+                    except (ValueError, AttributeError):
+                        detail = None
+                    code = (
+                        "presets_unsupported"
+                        if detail == "Not Found"
+                        else "input_unavailable"
+                        if detail
+                        == "An input file is missing or expired. Upload it again."
+                        else "preset_not_found"
+                        if isinstance(detail, dict)
+                        and detail.get("code") == "preset_not_found"
+                        else "preset_unavailable"
+                    )
+                    raise ConnectorError(code, status=404)
                 self.checked(response, uncertain=uncertain)
                 body = bytearray()
                 for chunk in response.iter_bytes():
@@ -321,6 +343,43 @@ class Connector:
 
     def list_jobs(self):
         return self.call("GET", "/v1/jobs")
+
+    def presets(self):
+        # REST metadata is public; this owned read verifies the MCP jobs:read scope.
+        self.list_jobs()
+        try:
+            return self.call("GET", "/v1/presets")
+        except ConnectorError as exc:
+            if exc.detail.get("status") == 404:
+                raise ConnectorError("presets_unsupported", status=404) from None
+            raise
+
+    def run_preset(
+        self, preset_id, version, inputs, parameters, timeout_seconds, request_id
+    ):
+        try:
+            key = str(UUID(request_id))
+        except (ValueError, TypeError, AttributeError):
+            raise ConnectorError("invalid_request_id") from None
+        result = self.call(
+            "POST",
+            "/v1/jobs/from-preset",
+            json={
+                "preset_id": preset_id,
+                "version": version,
+                "inputs": inputs,
+                "parameters": parameters,
+                "timeout_seconds": timeout_seconds,
+            },
+            headers={"Idempotency-Key": key},
+            uncertain=True,
+            preset=True,
+        )
+        if not isinstance(result.get("id"), str) or not re.fullmatch(
+            r"[a-f0-9]{32}", result["id"]
+        ):
+            raise ConnectorError("invalid_service_response", uncertain=True)
+        return result
 
     def get_job(self, identifier):
         return self.call("GET", "/v1/jobs/" + job_id(identifier))

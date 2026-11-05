@@ -1,0 +1,16 @@
+{
+  "tool": "run_preset",
+  "arguments": {
+    "preset_id": "web-mp4",
+    "version": 1,
+    "inputs": ["REPLACE_WITH_OWNED_UPLOADED_FILE_ID"],
+    "parameters": {
+      "max_width": 1280,
+      "crf": 28,
+      "start_seconds": 0,
+      "duration_seconds": 1
+    },
+    "timeout_seconds": 30,
+    "request_id": "REPLACE_WITH_NEW_UUID_ONCE_THEN_KEEP_FOR_IDENTICAL_RETRIES"
+  }
+}

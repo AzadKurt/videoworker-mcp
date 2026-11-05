@@ -1,6 +1,7 @@
 """Connector trust boundaries and real SDK tool discovery, without model inference."""
 
 import asyncio
+import json
 import os
 import uuid
 
@@ -135,6 +136,8 @@ def test_real_sdk_tools_have_scopes_annotations_and_structured_results(tmp_path)
             assert {t.name for t in tools.tools} == {
                 "get_usage",
                 "list_jobs",
+                "list_presets",
+                "run_preset",
                 "upload_file",
                 "create_job",
                 "get_job",
@@ -153,6 +156,235 @@ def test_real_sdk_tools_have_scopes_annotations_and_structured_results(tmp_path)
 
     asyncio.run(exercise())
     connector.close()
+
+
+def test_run_preset_keeps_uuid_and_ownership(tmp_path):
+    from mcp import Client
+
+    from videoworker_mcp.client import Connector
+    from videoworker_mcp.server import build_server
+
+    seen = []
+
+    def respond(request):
+        seen.append(
+            (
+                request.method,
+                request.url.path,
+                request.headers["authorization"],
+                request.headers.get("idempotency-key"),
+                json.loads(request.content) if request.content else None,
+            )
+        )
+        if request.url.path == "/v1/jobs":
+            return httpx.Response(200, json={"jobs": []})
+        if request.url.path == "/v1/presets":
+            return httpx.Response(
+                200, json={"presets": [{"id": "web-mp4", "version": 1}]}
+            )
+        return httpx.Response(202, json={"id": "a" * 32, "state": "queued"})
+
+    connector = Connector(settings(tmp_path), transport=httpx.MockTransport(respond))
+    args = {
+        "preset_id": "web-mp4",
+        "version": 1,
+        "inputs": ["b" * 32],
+        "parameters": {"crf": 25},
+        "timeout_seconds": 7,
+        "request_id": "ABCDEFAB-1234-4321-ABCD-123456789ABC",
+    }
+
+    async def exercise():
+        async with Client(build_server(connector)) as client:
+            tools = {t.name: t for t in (await client.list_tools()).tools}
+            assert tools["list_presets"].annotations.read_only_hint
+            assert tools["run_preset"].annotations.idempotent_hint
+            catalog = await client.call_tool("list_presets", {})
+            assert catalog.structured_content == {
+                "presets": [{"id": "web-mp4", "version": 1}]
+            }
+            for _ in range(2):
+                result = await client.call_tool("run_preset", args)
+                assert result.structured_content["id"] == "a" * 32
+            invalid = await client.call_tool(
+                "run_preset", {**args, "request_id": "not-a-uuid"}
+            )
+            assert invalid.is_error
+
+    asyncio.run(exercise())
+    assert (
+        seen
+        == [
+            ("GET", "/v1/jobs", "Bearer fk_unit_secret", None, None),
+            ("GET", "/v1/presets", "Bearer fk_unit_secret", None, None),
+        ]
+        + [
+            (
+                "POST",
+                "/v1/jobs/from-preset",
+                "Bearer fk_unit_secret",
+                "abcdefab-1234-4321-abcd-123456789abc",
+                {key: value for key, value in args.items() if key != "request_id"},
+            )
+        ]
+        * 2
+    )
+    connector.close()
+
+
+@pytest.mark.parametrize(
+    "status,unknown", [(403, False), (409, False), (422, False), (503, True), (0, True)]
+)
+def test_preset_write_failure_is_not_retried(tmp_path, status, unknown):
+    from videoworker_mcp.client import Connector, ConnectorError
+
+    calls = []
+
+    def respond(request):
+        calls.append(request)
+        if status == 0:
+            raise httpx.ReadError("controlled lost reply")
+        return httpx.Response(status, text="private service detail fk_unit_secret")
+
+    connector = Connector(settings(tmp_path), transport=httpx.MockTransport(respond))
+    with pytest.raises(ConnectorError) as failure:
+        connector.run_preset("web-mp4", 1, ["b" * 32], {}, 7, str(uuid.uuid4()))
+    assert len(calls) == 1
+    assert bool(failure.value.detail.get("outcome_unknown")) == unknown
+    assert "fk_unit_secret" not in str(failure.value)
+    connector.close()
+
+
+def test_old_server_reports_presets_unsupported_without_raw_fallback(tmp_path):
+    from videoworker_mcp.client import Connector, ConnectorError
+
+    seen = []
+
+    def respond(request):
+        seen.append(request.url.path)
+        return (
+            httpx.Response(200, json={"jobs": []})
+            if request.url.path == "/v1/jobs"
+            else httpx.Response(404, json={"detail": "Not Found"})
+        )
+
+    connector = Connector(settings(tmp_path), transport=httpx.MockTransport(respond))
+    with pytest.raises(ConnectorError, match="presets_unsupported"):
+        connector.presets()
+    with pytest.raises(ConnectorError, match="presets_unsupported"):
+        connector.run_preset("web-mp4", 1, ["b" * 32], {}, 7, str(uuid.uuid4()))
+    assert seen == ["/v1/jobs", "/v1/presets", "/v1/jobs/from-preset"]
+    connector.close()
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"version": True},
+        {"version": "1"},
+        {"version": 1.5},
+        {"timeout_seconds": True},
+        {"timeout_seconds": "7"},
+    ],
+)
+def test_preset_sdk_rejects_coerced_numbers_before_post(tmp_path, changes):
+    from mcp import Client
+
+    from videoworker_mcp.client import Connector
+    from videoworker_mcp.server import build_server
+
+    seen = []
+
+    def respond(request):
+        seen.append(request.url.path)
+        return httpx.Response(202, json={"id": "a" * 32})
+
+    connector = Connector(settings(tmp_path), transport=httpx.MockTransport(respond))
+
+    async def check():
+        async with Client(build_server(connector)) as client:
+            result = await client.call_tool(
+                "run_preset",
+                {
+                    "preset_id": "web-mp4",
+                    "version": 1,
+                    "inputs": ["b" * 32],
+                    "parameters": {},
+                    "timeout_seconds": 7,
+                    "request_id": str(uuid.uuid4()),
+                    **changes,
+                },
+            )
+            assert result.is_error
+
+    try:
+        asyncio.run(check())
+        assert seen == []
+    finally:
+        connector.close()
+
+
+@pytest.mark.parametrize("body", [{}, {"id": "bad"}])
+def test_preset_bad_success_is_an_unknown_write(tmp_path, body):
+    from videoworker_mcp.client import Connector, ConnectorError
+
+    connector = Connector(
+        settings(tmp_path),
+        transport=httpx.MockTransport(lambda r: httpx.Response(202, json=body)),
+    )
+    try:
+        with pytest.raises(ConnectorError) as failure:
+            connector.run_preset("web-mp4", 1, ["b" * 32], {}, 7, str(uuid.uuid4()))
+        assert failure.value.detail["outcome_unknown"]
+    finally:
+        connector.close()
+
+
+@pytest.mark.parametrize(
+    "detail,code",
+    [
+        ("Not Found", "presets_unsupported"),
+        ("An input file is missing or expired. Upload it again.", "input_unavailable"),
+        ({"code": "preset_not_found"}, "preset_not_found"),
+    ],
+)
+def test_preset_missing_input_is_distinct_from_missing_server(tmp_path, detail, code):
+    from videoworker_mcp.client import Connector, ConnectorError
+
+    connector = Connector(
+        settings(tmp_path),
+        transport=httpx.MockTransport(
+            lambda r: httpx.Response(404, json={"detail": detail})
+        ),
+    )
+    try:
+        with pytest.raises(ConnectorError) as failure:
+            connector.run_preset("web-mp4", 1, ["b" * 32], {}, 7, str(uuid.uuid4()))
+        assert failure.value.detail["code"] == code
+    finally:
+        connector.close()
+
+
+@pytest.mark.parametrize("status", [401, 403])
+def test_preset_catalog_checks_jobs_read_before_public_metadata(tmp_path, status):
+    from videoworker_mcp.client import Connector, ConnectorError
+
+    seen = []
+
+    def respond(request):
+        seen.append(request.url.path)
+        return httpx.Response(
+            status if request.url.path == "/v1/jobs" else 200, json={"presets": []}
+        )
+
+    connector = Connector(settings(tmp_path), transport=httpx.MockTransport(respond))
+    try:
+        with pytest.raises(ConnectorError) as failure:
+            connector.presets()
+        assert failure.value.detail["status"] == status
+        assert seen == ["/v1/jobs"]
+    finally:
+        connector.close()
 
 
 def test_failed_download_keeps_creation_and_cleanup_in_selected_directory(

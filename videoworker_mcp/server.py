@@ -60,6 +60,7 @@ def build_server(connector):
         parameters: dict[str, Any],
         timeout_seconds: StrictFloat,
         request_id: str,
+        webhook_endpoint_id: str | None = None,
     ) -> dict[str, Any]:
         """Submit a versioned preset from list_presets with owned upload IDs. Requires jobs:write. Explicit timeout reserves ordinary processing quota. Choose one UUID request_id; retry identical arguments with it for 48h, never automatically after a lost reply. Returns one job without waiting. preset_unavailable means the server, preset or version is unavailable; never fall back to raw FFmpeg silently."""
         return invoke(
@@ -70,6 +71,7 @@ def build_server(connector):
             parameters,
             timeout_seconds,
             request_id,
+            webhook_endpoint_id,
         )
 
     @server.tool(annotations=write)
@@ -84,10 +86,17 @@ def build_server(connector):
         outputs: list[str],
         timeout_seconds: float,
         request_id: str,
+        webhook_endpoint_id: str | None = None,
     ) -> dict[str, Any]:
         """Submit FFmpeg arguments using {{input:N}}/{{output:N}} placeholders. Requires jobs:write. Choose a UUID request_id once; retry identical arguments with that UUID for 48h. Changed payload conflicts, expired original job returns 410. Runtime is seconds and reserves quota before execution."""
         return invoke(
-            connector.create_job, inputs, args, outputs, timeout_seconds, request_id
+            connector.create_job,
+            inputs,
+            args,
+            outputs,
+            timeout_seconds,
+            request_id,
+            webhook_endpoint_id,
         )
 
     @server.tool(annotations=read)

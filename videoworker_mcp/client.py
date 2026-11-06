@@ -355,7 +355,14 @@ class Connector:
             raise
 
     def run_preset(
-        self, preset_id, version, inputs, parameters, timeout_seconds, request_id
+        self,
+        preset_id,
+        version,
+        inputs,
+        parameters,
+        timeout_seconds,
+        request_id,
+        webhook_endpoint_id=None,
     ):
         try:
             key = str(UUID(request_id))
@@ -370,6 +377,7 @@ class Connector:
                 "inputs": inputs,
                 "parameters": parameters,
                 "timeout_seconds": timeout_seconds,
+                **self.webhook_options(webhook_endpoint_id),
             },
             headers={"Idempotency-Key": key},
             uncertain=True,
@@ -384,7 +392,26 @@ class Connector:
     def get_job(self, identifier):
         return self.call("GET", "/v1/jobs/" + job_id(identifier))
 
-    def create_job(self, inputs, args, outputs, timeout_seconds, request_id):
+    def webhook_options(self, endpoint_id):
+        if endpoint_id is None:
+            return {}
+        if not isinstance(endpoint_id, str) or not re.fullmatch(
+            r"[a-f0-9]{32}", endpoint_id
+        ):
+            raise ConnectorError("invalid_webhook_endpoint")
+        if self.call("GET", "/v1/health").get("webhooks_enabled") is not True:
+            raise ConnectorError("webhooks_unsupported")
+        return {"webhook_endpoint_id": endpoint_id}
+
+    def create_job(
+        self,
+        inputs,
+        args,
+        outputs,
+        timeout_seconds,
+        request_id,
+        webhook_endpoint_id=None,
+    ):
         try:
             key = str(UUID(request_id))
         except (ValueError, TypeError, AttributeError):
@@ -397,6 +424,7 @@ class Connector:
                 "args": args,
                 "outputs": outputs,
                 "timeout_seconds": timeout_seconds,
+                **self.webhook_options(webhook_endpoint_id),
             },
             headers={"Idempotency-Key": key},
             uncertain=True,

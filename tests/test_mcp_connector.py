@@ -18,6 +18,39 @@ def settings(tmp_path):
     return Settings("http://localhost:18887", "fk_unit_secret", upload, download)
 
 
+def test_job_callback_requires_server_support_and_keeps_request_id(tmp_path):
+    from videoworker_mcp.client import Connector, ConnectorError
+
+    seen = []
+    supported = True
+
+    def respond(request):
+        seen.append(request)
+        if request.url.path == "/v1/health":
+            return httpx.Response(200, json={"webhooks_enabled": supported})
+        return httpx.Response(202, json={"id": "a" * 32, "state": "queued"})
+
+    connector = Connector(settings(tmp_path), transport=httpx.MockTransport(respond))
+    key = str(uuid.uuid4())
+    connector.create_job(
+        ["b" * 32], ["-i", "{{input:0}}", "{{output:0}}"], ["a.mp4"], 5, key, "c" * 32
+    )
+    assert seen[-1].headers["idempotency-key"] == key
+    assert json.loads(seen[-1].content)["webhook_endpoint_id"] == "c" * 32
+    supported = False
+    seen.clear()
+    with pytest.raises(ConnectorError, match="webhooks_unsupported"):
+        connector.create_job(
+            ["b" * 32],
+            ["-i", "{{input:0}}", "{{output:0}}"],
+            ["a.mp4"],
+            5,
+            key,
+            "c" * 32,
+        )
+    assert all(r.method == "GET" for r in seen)
+
+
 def test_origin_and_local_file_boundaries(tmp_path):
     from dataclasses import replace
 

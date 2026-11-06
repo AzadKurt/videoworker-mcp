@@ -22,10 +22,17 @@ no local FFmpeg installation required.
 | Grab a video frame    | `thumbnail-jpg` v1 | JPEG thumbnail          |
 | Make a short preview  | `gif-preview` v1   | Animated GIF            |
 
-Discover parameters with `list_presets`, then use `run_preset` with one uploaded
-file ID and an explicit version. For multi-file edits, overlays or your own
+Discover parameters and the required input count with `list_presets`, then use
+`run_preset` with your uploaded file IDs in the displayed order and an explicit
+version. For multi-file edits, overlays or your own
 filters, `create_job` accepts custom FFmpeg arguments. Track, cancel and download
 both kinds of job through the same tools and account allowance.
+
+The source checkout also includes a [preview of signed job webhooks](docs/webhooks.md)
+and a durable receiver example. This addition is not in the published v0.2.0
+wheel and requires a server that explicitly enables the capability. Supplied
+subtitle presets are discovered from the server catalog when available; do not
+assume a preset exists without checking `list_presets`.
 
 ## Choose your connection
 

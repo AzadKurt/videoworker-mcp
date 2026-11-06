@@ -16,12 +16,19 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 
+def signing_key(secret):
+    key = base64.b64decode(secret.removeprefix("whsec_"), validate=True)
+    if len(key) < 32:
+        raise ValueError("Signing secrets must contain at least 32 random bytes.")
+    return key
+
+
 def verified(secret, headers, body, *, now=None):
     try:
         stamp = int(headers["webhook-timestamp"])
         if abs((time.time() if now is None else now) - stamp) > 300:
             return False
-        key = base64.b64decode(secret.removeprefix("whsec_"), validate=True)
+        key = signing_key(secret)
         message = (
             headers["webhook-id"].encode() + b"." + str(stamp).encode() + b"." + body
         )
@@ -84,6 +91,11 @@ class Receiver(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    if not os.environ.get("WEBHOOK_SIGNING_SECRET"):
-        raise SystemExit("Set WEBHOOK_SIGNING_SECRET privately before starting.")
+    try:
+        signing_key(os.environ.get("WEBHOOK_SIGNING_SECRET", ""))
+    except ValueError:
+        raise SystemExit(
+            "Set a valid WEBHOOK_SIGNING_SECRET privately before starting "
+            "(base64 of at least 32 random bytes)."
+        ) from None
     ThreadingHTTPServer(("127.0.0.1", 9005), Receiver).serve_forever()

@@ -1,16 +1,31 @@
 # videoworker MCP
 
-**Give your AI agent FFmpeg: upload local media, run a remote job, and save the result.**
+**Give your AI agent a media workflow: upload, pick a preset, save the result.**
 
 An MIT-licensed, local stdio MCP connector for the [videoworker](https://videoworker.dev)
-video, audio and image processing API. Bring standard FFmpeg arguments; our workers
-run them. No local FFmpeg installation required.
+video, audio and image processing API. Use versioned presets for everyday exports
+or standard FFmpeg arguments for custom edits. Our workers run the processing;
+no local FFmpeg installation required.
 
 [Get started free](https://videoworker.dev/pricing) ·
 [Hosted MCP](https://videoworker.dev/mcp) ·
 [REST API](https://videoworker.dev/docs) ·
 [Releases](https://github.com/AzadKurt/videoworker-mcp/releases) ·
 [Listed on Glama](https://glama.ai/mcp/servers/AzadKurt/videoworker-mcp)
+
+## What can your agent do?
+
+| Task                  | Preset             | Result                  |
+| --------------------- | ------------------ | ----------------------- |
+| Trim and resize video | `web-mp4` v1       | Web-ready H.264/AAC MP4 |
+| Extract audio         | `audio-mp3` v1     | MP3 audio               |
+| Grab a video frame    | `thumbnail-jpg` v1 | JPEG thumbnail          |
+| Make a short preview  | `gif-preview` v1   | Animated GIF            |
+
+Discover parameters with `list_presets`, then use `run_preset` with one uploaded
+file ID and an explicit version. For multi-file edits, overlays or your own
+filters, `create_job` accepts custom FFmpeg arguments. Track, cancel and download
+both kinds of job through the same tools and account allowance.
 
 ## Choose your connection
 
@@ -131,15 +146,18 @@ tested; this does not claim every desktop app/version was manually tested.
 
 Put a small `clip.mp4` in uploads and ask your agent:
 
-> Check my videoworker allowance first. I authorize uploading clip.mp4 from my
-> configured uploads folder. Trim it to its first second and compress it as MP4.
-> Create one job with a 10-second runtime limit. Keep its request_id for any retry,
-> wait at least one second between status checks, and save the successful result
-> as clip-small.mp4 in my downloads folder. Do not delete anything.
+> Check my videoworker allowance and list the presets first. I authorize uploading
+> clip.mp4 from my configured uploads folder. Use web-mp4 version 1 to export the
+> first second as MP4 with max_width 640 and a 10-second processing maximum.
+> Create one job. Keep its request_id for retries, wait at least one second between
+> status checks, and save the successful result in my downloads folder. Do not
+> delete anything.
 
-Flow: `get_usage` → `upload_file` → `create_job` → `get_job` → `download_result`.
-See [example job arguments](examples/trim-and-compress.json): replace the input
-file ID and generate a new UUID for each intended job.
+Flow: `get_usage` → `list_presets` → `upload_file` → `run_preset` → `get_job` →
+`download_result`. See [preset arguments](examples/web-mp4.preset.mcp.json): replace
+the input file ID and generate a new UUID for each intended job. Prefer raw
+commands? Use `create_job` with these
+[example job arguments](examples/trim-and-compress.json).
 
 ### More than one input
 

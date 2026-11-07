@@ -15,12 +15,17 @@ no local FFmpeg installation required.
 
 ## What can your agent do?
 
-| Task                  | Preset             | Result                  |
-| --------------------- | ------------------ | ----------------------- |
-| Trim and resize video | `web-mp4` v1       | Web-ready H.264/AAC MP4 |
-| Extract audio         | `audio-mp3` v1     | MP3 audio               |
-| Grab a video frame    | `thumbnail-jpg` v1 | JPEG thumbnail          |
-| Make a short preview  | `gif-preview` v1   | Animated GIF            |
+| Task                   | Preset                   | Result                               |
+| ---------------------- | ------------------------ | ------------------------------------ |
+| Trim and resize video  | `web-mp4` v1             | Web-ready H.264/AAC MP4              |
+| Extract audio          | `audio-mp3` v1           | MP3 audio                            |
+| Grab a video frame     | `thumbnail-jpg` v1       | JPEG thumbnail                       |
+| Make a short preview   | `gif-preview` v1         | Animated GIF                         |
+| Burn in your subtitles | `subtitles-burn-mp4` v1  | MP4 with SRT/VTT text rendered in    |
+| Add a subtitle track   | `subtitles-track-mp4` v1 | MP4 with a switchable subtitle track |
+
+Subtitle presets take two inputs: the video, then your own `.srt` or `.vtt` file
+(up to 2 MiB). They do not transcribe or translate.
 
 Discover parameters and the required input count with `list_presets`, then use
 `run_preset` with your uploaded file IDs in the displayed order and an explicit
@@ -28,11 +33,12 @@ version. For multi-file edits, overlays or your own
 filters, `create_job` accepts custom FFmpeg arguments. Track, cancel and download
 both kinds of job through the same tools and account allowance.
 
-The source checkout also includes a [preview of signed job webhooks](docs/webhooks.md)
-and a durable receiver example. This addition is not in the published v0.2.0
-wheel and requires a server that explicitly enables the capability. Supplied
-subtitle presets are discovered from the server catalog when available; do not
-assume a preset exists without checking `list_presets`.
+**Signed job webhooks** notify your own HTTPS endpoint when a job finishes; they
+are live on videoworker.dev. Selecting an endpoint per job works through hosted
+MCP, REST and this source checkout ([guide](docs/webhooks.md), with a durable
+receiver example); the published v0.2.0 wheel does not include that argument
+yet. Preset availability always comes from the server catalog, so check
+`list_presets` rather than assuming a preset exists.
 
 ## Choose your connection
 
